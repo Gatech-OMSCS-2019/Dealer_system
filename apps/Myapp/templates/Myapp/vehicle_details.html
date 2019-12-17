@@ -1,0 +1,343 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <style>
+
+        body {
+            padding-bottom: 100px;
+        }
+
+        li.add_vehicle {
+            display: none;
+        }
+
+        .box {
+            background: rgba(0, 0, 0, 0.4);
+            margin: auto;
+            width: 50%;
+            padding: 40px 10px;
+            text-align: center;
+            color: white;
+            font-family: 'Century Gothic', sans-serif;
+        }
+
+        .part_list {
+            width: 70%;
+            margin: auto;
+        }
+
+        div.add_part_order {
+            width: 70%;
+            margin: auto;
+            display: none;
+        }
+
+        span {
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        p {
+            display: flex;
+            justify-content: space-between;
+            width: 60%;
+            margin: 10px auto;
+        }
+
+        form {
+            width: 70%;
+            margin: 50px auto;
+            text-align: center;
+        }
+
+        {% if error_form == 'transaction_form' %}
+            form.sell_car {
+                display: block;
+            }
+        {% else %}
+            form.sell_car {
+                display: none;
+            }
+        {% endif %}
+
+
+        {% if error_form == 'add_seller' %}
+            form.add_customer {
+                display: block;
+            }
+        {% else %}
+            form.add_customer {
+                display: none;
+            }
+        {% endif %}
+
+        .loan_info ul {
+            width: 60%;
+        }
+
+        ul.errorlist{
+           display: none;
+        }
+    </style>
+    <script>
+        var vin = '{{vehicle.vin}}';
+        var username = '{{user.username}}';
+    </script>
+    {% load static %}
+    <script type="text/javascript" src="{% static 'Myapp/js/vehicle_details.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+    <div class="row" style="text-align: center">
+        <div class="box">
+            {{ error_form }}
+            <p><b>VIN:</b><span style="text-align: right">{{ vehicle.vin }}</span></p>
+            <p><b style="float: left">Vehicle Type:</b> <span style="float: right">{{ type.type_name }}</span></p>
+            <p><b>Model Year:</b> {{ vehicle.model_year }}</p>
+            <p><b>Model:</b> {{ vehicle.model_name }}</p>
+            <p><b>Manufacturer:</b> {{ mfg.mfg_name }}</p>
+            <p><b>colors:</b> {% for c in colors %} {{ c.color }} {% endfor %}</p>
+            <p><b>Mileage:</b> {{ vehicle.mileage }}</p>
+            <p><b>Description:</b> {{ vehicle.description }}</p>
+            <p><b>Price:</b> {{ sales_price }}</p>
+            {% if "Manager" in user.job_title  or "Inventory Clerk" in user.job_title %}
+                <p><b>Buy-in Price:</b> {{ vehicle.original_price }}</p>
+                <p><b>Total Cost for Parts:</b> {{ total_cost }}</p>
+                {% if 'Manager' in user.job_title %}
+                    <p><b>Processing Inventory Clerk: </b> {{ manager_view.inven }}</p>
+                    <p><b>Buy-in Date </b> {{ manager_view.add_at }}</p>
+                    {% if manager_view.sold_by %}
+                        <p><b>Processing Salesman: </b> {{ manager_view.sales }}</p>
+                        <p><b>Sold-out Date</b> {{ manager_view.sold_at }}</p>
+                        <div class="loan_info" style="margin: 10px auto">
+                            <h4 style="border-bottom: white 1px solid; width: 60%; margin: 10px auto">Loan Info</h4>
+                            <ul style="margin: 10px auto; list-style-type: none">
+                                <li>Starting Month: {{ manager_view.starting_month }}</li>
+                                <li>Term: {{ manager_view.term }}</li>
+                                <li>Monthly Payment: {{ manager_view.payment }}</li>
+                                <li>Interest Rate: {{ manager_view.rate }}</li>
+                                <li>Down-Payment: {{ manager_view.down_payment }}</li>
+                            </ul>
+                        </div>
+
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+        </div>
+        {% if  'Sales People' in user.job_title %}
+            <button class="btn btn-success sell_car" style="margin-top: 20px">Sell Car</button>
+        {% endif %}
+
+    </div>
+    {% if 'Manager' in user.job_title %}
+        <div class="row" style="margin-bottom: 20px; display: flex; text-align: center">
+            <fieldset style="border: #447e9b solid 2px; width: 40%; display: inline; margin: 20px auto">
+                <legend>Seller Info</legend>
+
+                {% for key, value in seller.items %}
+                    {% if key != 'dl_num' and key != 'tax_id' %}
+                        <p><b>{{ key }}</b> {{ value }}</p>
+                    {% endif %}
+                {% endfor %}
+            </fieldset>
+            {% if if_sold %}
+                <fieldset style="border: #447e9b solid 2px; width: 40%; display: inline; margin: 20px auto">
+                    <legend> Buyer Info (Customer)</legend>
+                    {% for key, value in buyer.items %}
+                        {% if key != 'dl_num' and key != 'tax_id' %}
+                            <p><b>{{ key }}</b> {{ value }}</p>
+                        {% endif %}
+                    {% endfor %}
+                    <p><b>{{ key }}</b> {{ value }}</p>
+
+                </fieldset>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <div class="part_list">
+        {% if "Manager" in user.job_title  or "Inventory Clerk" in user.job_title %}
+            <table class="table table-condensed table-hover">
+                <thead>
+                <th> Part Number</th>
+                <th> Description</th>
+                <th> Purchase Order</th>
+                <th> Vendor </th>
+                <th> Cost</th>
+                <th> Status</th>
+                {% if 'Inventory Clerk' in user.job_title %}
+                    <th> Update</th>
+                {% endif %}
+                </thead>
+                <tbody>
+                {% for p in parts %}
+                    <tr>
+                        <td class="part_num">{{ p.part_num }}</td>
+                        <td>{{ p.description }}</td>
+                        <td class="po_num">{{ p.VIN }}-{{ p.order_index }}</td>
+                        <td>{{ p.vendor_name }}</td>
+                        <td>{{ p.price }}</td>
+                        <td class="editable">{{ p.status }}</td>
+                        {% if 'Inventory Clerk' in user.job_title %}
+                            <td class="action_{{ forloop.counter0 }}"><span
+                                    class="glyphicon glyphicon-pencil text-success"
+                                    onclick="update_part('{{ p.VIN }}','{{ p.order_index }}','{{ p.part_num }}', '{{ user.username }}', '{{ forloop.counter0 }}', '{{ p.status }}')"></span>
+                                <span class="glyphicon glyphicon-trash text-warning"
+                                      onclick="cancel('{{ p.VIN }}','{{ p.order_index }}', '{{ p.part_num }}','{{ user.username }}','{{ forloop.counter0 }}', '{{ p.status }}')"
+                                      style="display: none"
+                                ></span>
+                            </td>
+                        {% endif %}
+
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+
+
+    <div class="sell_car">
+        <form action="#" class="sell_car" method="post">
+            {% csrf_token %}
+            <fieldset style="border: #00818a solid 1px; padding: 10px 40px">
+                {% if transaction_form.errors or loan_form.errors %}
+                    {% for field, errors in transaction_form.errors.items %}
+
+                        <div class="alert alert-danger">
+                            {{ field }}:
+                            {% for error in errors %}
+                                <a href="#" class="close" data-dismiss="alert">x</a>
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                    {% for field, error in loan_form.errors.items %}
+                        <div class="alert alert-danger">
+                            {{ field }}:
+                            {% for error in errors %}
+                                <a href="#" class="close" data-dismiss="alert">x</a>
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                <legend style="width: auto; text-align: left; border: 0; padding: 0 30px">New Transaction</legend>
+                {{ transaction_form.as_p }}
+                {{ loan_form.as_p }}
+                <input type="submit" value="Confirm" name="submit_transaction">
+                <button type="button" class="add_customer">Add Customer</button>
+                </legend>
+            </fieldset>
+        </form>
+
+
+        <form action="#" class="add_customer" method="post">
+            {% csrf_token %}
+            <fieldset style="border: #00818a solid 1px; padding: 10px 40px">
+                <legend style="width: auto; text-align: left; border: 0; padding: 0 30px">Add New Cusotmer</legend>
+                {% if customer_form.non_field_errors %}
+                    {% for error in customer_form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            <a class="close" href="#" data-dismiss="alert">x</a>
+                            {{ error }}
+                        </div>
+
+
+                    {% endfor %}
+                {% endif %}
+                <div class="row">
+
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="{{ customer_form.type.id_for_label }}">Individual</label>
+                        {{ customer_form.type }}
+                    </div>
+                </div>
+                <div class="row ">
+                    <div class="col-md-5">
+                        <label for="{{ customer_form.first_name.id_for_label }}">First Name</label>
+                        {{ customer_form.first_name }}
+                    </div>
+                    <div class="col-md-5 col-md-offset-2">
+                        <label for="{{ Customer_form.seller.id_for_label }}">Last Name</label>
+                        {{ customer_form.last_name }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="{{ customer_form.street.id_for_label }}">Street</label>
+                        {{ customer_form.street }}
+                    </div>
+
+                </div>
+
+                <div class="row ">
+                    <div class=" col-md-4">
+                        <label for="{{ customer_form.city.id_for_label }}">City</label>
+                        {{ customer_form.city }}
+                    </div>
+                    <div class="col-md-4 ">
+                        <label for="{{ Customer_form.state.id_for_label }}">State</label>
+                        {{ customer_form.state }}
+                    </div>
+                    <div class="col-md-4">
+                        <label for="{{ Customer_form.zip_code.id_for_label }}">Zip Code</label>
+                        {{ customer_form.zip_code }}
+                    </div>
+                </div>
+
+
+                <div class="row ">
+                    <div class=" col-md-5">
+                        <label for="{{ customer_form.phone_number.id_for_label }}">Phone</label>
+                        {{ customer_form.phone_number }}
+                    </div>
+                    <div class="col-md-5 col-md-offset-2">
+                        <label for="{{ Customer_form.email.id_for_label }}">E-mail</label>
+                        {{ customer_form.email }}
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-12">
+                        <label for="{{ customer_form.dl_num.id_for_label }}">Driver License</label>
+                        {{ customer_form.dl_num }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class=" col-md-12">
+                        <label for="{{ customer_form.business_name.id_for_label }}">Company Name</label>
+                        {{ customer_form.business_name }}
+                    </div>
+                </div>
+                <div class="row ">
+                    <div class=" col-md-5">
+                        <label for="{{ customer_form.title.id_for_label }}">Tile</label>
+                        {{ customer_form.title }}
+                    </div>
+                    <div class="col-md-5 col-md-offset-2">
+                        <label for="{{ Customer_form.tax_id.id_for_label }}">Tax ID</label>
+                        {{ customer_form.tax_id }}
+                    </div>
+                </div>
+                <input class="btn btn-success" type="submit" value="Save Customer" name="submit_buyer">
+            </fieldset>
+            {% csrf_token %}
+
+        </form>
+    </div>
+    {% for message in messages %}
+
+        <div class="alert alert-success">
+            <a class="close" href="#" data-dismiss="alert">×</a>
+
+            {{ message }}
+
+        </div>
+
+    {% endfor %}
+{% endblock %}
+
+onclick="update_part('{{ p.po_num }}','{{ p.part_num }}', '{{ user.username }}', '{{ vehicle.vin }}', this.id)"

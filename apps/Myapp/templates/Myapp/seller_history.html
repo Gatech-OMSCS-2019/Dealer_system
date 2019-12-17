@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <style>
+
+        li.add_vehicle{
+            display: none;
+        }
+    #monthly_sales tr{
+        cursor: pointer;
+    }
+    </style>
+{% endblock %}
+{% block body %}
+    <ul class="nav nav-tabs">
+        <li {% if token == 'regular' %}class="active" {% endif %}><a data-toggle="tab" href="#seller_history">Seller History</a></li>
+        <li><a data-toggle="tab" href="#average_time">Inventory Average Time</a></li>
+        <li><a data-toggle="tab" href="#price_per_condition">Price Per Condition</a></li>
+        <li><a data-toggle="tab" href="#parts_stats">Parts Statistics</a></li>
+        <li><a data-toggle="tab" href="#loan_income">Monthly Loan Income</a></li>
+        <li {% if token == 'monthly_sales' %} class="active" {% endif %}><a data-toggle="tab" href="#monthly_sales">Monthly Sales</a></li>
+    </ul>
+
+    <div class="tab-content">
+        <div id="seller_history" {% if token == 'regular' %} class="tab-pane fade in active" {% else %} class="tab-pane fade"{% endif %}>
+            <h2>Seller History Report</h2>
+            <table class="table table-striped table-responsive">
+                <thead>
+                <tr>
+                    <th>Seller</th>
+                    <th> Num of Vehicles</th>
+                    <th> Avg Price</th>
+                    <th> Avg Ordered Parts</th>
+                    <th> Avg Part Cost/ Vehicle</th>
+                </tr>
+
+                </thead>
+                <tbody>
+                {% for r in seller_history %}
+                    <tr {% if r.avg_part >= 5 or r.avg_part_cost >= 500 %} class="danger" {% endif %} >
+                        <td>{{ r.seller_name }}</td>
+                        <td>{{ r.vehicle_num }}</td>
+                        <td>{{ r.avg_price }}</td>
+                        <td>{{ r.avg_part }}</td>
+                        <td>{{ r.avg_part_cost }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="average_time" class="tab-pane fade">
+            <h3>Inventory Average Time</h3>
+            <table class="table table-striped table-responsive">
+                <thead>
+                <tr>
+                    <th>Type</th>
+                    <th> Avg Time in Stock (DAYS)</th>
+                </tr>
+
+                </thead>
+                <tbody>
+                {% for r in average_time %}
+                    <tr>
+                        <td>{{ r.type_name }}</td>
+                        <td>{{ r.instock_day }}</td>
+
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="price_per_condition" class="tab-pane fade">
+             <h3>Price Per Condition</h3>
+            <table class="table table-striped table-responsive">
+                <thead>
+                <tr>
+                    <th>Type</th>
+                    <th> Excellent</th>
+                    <th> Very Good</th>
+                    <th> Good</th>
+                    <th> Fair</th>
+                </tr>
+
+                </thead>
+                <tbody>
+                {% for r in price_per_condition %}
+                    <tr>
+                        <td>{{ r.type_name }}</td>
+                        <td>{{ r.excellent }}</td>
+                        <td>{{ r.very_good }}</td>
+                        <td>{{ r.good }}</td>
+                        <td>{{ r.fair }}</td>
+
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="parts_stats" class="tab-pane fade">
+             <h3>Parts Statistics</h3>
+            <table class="table table-striped table-responsive">
+                <thead>
+                <tr>
+                    <th>Vendor</th>
+                    <th> # of Parts</th>
+                    <th> Cost</th>
+
+                </tr>
+
+                </thead>
+                <tbody>
+                {% for r in parts_stats %}
+                    <tr>
+                        <td>{{ r.vendor_name }}</td>
+                        <td>{{ r.part_quan }}</td>
+                        <td>{{ r.cost }}</td>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="loan_income" class="tab-pane fade">
+             <h3>Monthly Loan Income</h3>
+            <table class="table table-striped table-responsive">
+                <thead>
+                <tr>
+                    <th>Year</th>
+                    <th> Month </th>
+                    <th> Total Monthly Payment</th>
+                    <th>Share</th>
+
+                </tr>
+
+                </thead>
+                <tbody>
+                {% for r in results %}
+                    <tr>
+                        <td>{{ r.year }}</td>
+                        <td>{{ r.month }}</td>
+                        <td>{{ r.monthly_payment }}</td>
+                        <td>{{ r.earned_share }}</td>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div id="monthly_sales" {% if token == 'monthly_sales' %} class="tab-pane fade in active" {% else %} class="tab-pane fade"{% endif %}>
+             <h3>Monthly Sales</h3>
+            <table class="table table-striped table-responsive">
+                <thead>
+                <tr>
+                    <th>Year- Month</th>
+                    <th> # of Sold Vehicles</th>
+                    <th> Sales Income</th>
+                    <th> Net Sales Income</th>
+
+                </tr>
+
+                </thead>
+                <tbody>
+                {% for r in monthly_sales %}
+                    <tr onclick="location.href='/best_sales/year={{ r.year }}/month={{ r.month }}'" >
+                        <td>{{ r.year }} - {{ r.month }}</td>
+                        <td>{{ r.vehicle_num }}</td>
+                        <td>{{ r.sales_income }}</td>
+                        <td>{{ r.net_income }}</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+{% endblock %}

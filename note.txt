@@ -1,0 +1,10 @@
+Tip:
+
+
+1.------------ SQL query especially "SELECT" does not reflect the database change immediately after CRUD.
+    ---------- Solution: commit!
+
+2. ----------- <div class="alert alert-success">
+                    <a class="close" href="#" data-dismiss="alert">×</a>
+                    {{ message }}
+                </div>

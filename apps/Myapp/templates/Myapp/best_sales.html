@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block body %}
+    <div class="box" style="margin: 40px auto; text-align: center; width: 50%">
+
+    <h2>Best Sales People of {{ month }}-{{ year }}</h2>
+    {% if results %}
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Number of Vehicles Sold</th>
+                <th>Sales Amount</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for result in results %}
+            <tr {% if forloop.counter == 1 %} class="success" {% endif %}>
+                <td>{{ result.sales_people }}</td>
+                <td>{{ result.vehicle_num }}</td>
+                <td>{{ result.sales }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <a href="/reports/token=monthly_sales">Back to Reports</a>
+    {% endif %}
+</div>
+{% endblock %}

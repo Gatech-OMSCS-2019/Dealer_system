@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+
+{% block head %}
+    <script>
+        var vin = '{{ vin }}';
+        var  po_num = '{{ po_num }}';
+    </script>
+{% endblock %}
+
+{% block body %}
+    <div class="add_part_order" style="margin: 50px auto; width: 60%">
+            <h3 style="display: inline">Part Order Number: {{ po_num }}</h3>
+            <button class="btn btn-danger" onclick="location.href='/'" style="float: right; margin-right: 20px">Complete Placing Part Order</button>
+        <form action="/"
+              class="add_part" method="post">
+            {% csrf_token %}
+            {{ part_form.as_p }}
+            <div class="row form-group" style="text-align: center">
+
+                <button type="submit" class="btn btn-success" id="new_part" name="submit_part">New Part
+                </button>
+                <button class="btn btn-danger" name="cancel"
+                        onclick="location.href='/add_part/cancel/vin={{ vin }}'">
+                    Cancel
+                </button>
+
+            </div>
+        </form>
+
+        <form action="{% url 'add_part_order' vin=vin%}" method="post" style="margin-top:30px">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ part_order_form.as_p }}
+            </div>
+            <div class="row form-group" style="text-align: center">
+                <button type="submit" class="btn btn-success" name="submit_part_order" value="submit_part_order">
+                    Submit
+                </button>
+            </div>
+        </form>
+
+        {% for message in messages %}
+            <div class="alert alert-success">
+            <a class="close" href="#" data-dismiss="alert">×</a>
+
+            {{ message }}
+
+        </div>
+        {% endfor%}
+
+    </div>
+    <script>
+        $(document).ready(function () {
+
+            $("select option:nth-child(1)").each(function(){
+                console.log($(this).html())
+                $(this).attr('disabled', true);
+            })
+            $('button#new_part').click(function (e) {
+                e.preventDefault();
+                console.log('add part clicked');
+                console.log($("input[name='part_num']").val());
+                var formdata = new FormData();
+                formdata.append('part_num', $("input[name='part_num']").val());
+                formdata.append('description', $("input[name='description']").val());
+                formdata.append('price', $("input[name='price']").val());
+                formdata.append('submit_part', $("button[name='submit_part']").html());
+                for (var key of formdata.entries()) {
+                    console.log(key[0] + ', ' + key[1]);
+                }
+                $.ajax({
+                    type: 'POST',
+                    url: `/part_order/add/vin=${vin}`,
+                    contentType: false,
+                    processData: false,
+                    data: formdata,
+                    success: function (r) {
+                        console.log("success");
+                        alert("Part has been added to the list");
+                        window.location.replace(`/part_order/add/vin=${vin}`);
+                        console.log(window.location());
+                        window.location.reload();
+                    },
+                    error: function (response) {
+                        alert(response.responseJSON.error);
+                        // window.location.replace(`/vehicle_details/user=${username}/vin=${vin}/yes`)
+                    }
+                })
+            })
+
+        })
+    </script>
+{% endblock %}

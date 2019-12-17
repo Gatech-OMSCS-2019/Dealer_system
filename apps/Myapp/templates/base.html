@@ -1,0 +1,82 @@
+<head>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/css/bootstrap.min.css">
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
+    <script>
+        ///////////////////////////////////////////////////////////////////////////////////////////////
+        /////////////////// set a custom X-CSRFToken header to the value of the CSRF token. //////////
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = jQuery.trim(cookies[i]);
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        var csrftoken = getCookie('csrftoken');
+
+        //Setting the token on the AJAX request
+        function csrfSafeMethod(method) {
+            // these HTTP methods do not require CSRF protection
+            return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+        }
+
+        $.ajaxSetup({
+            beforeSend: function (xhr, settings) {
+                if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                }
+            }
+        });
+        //////////////////////////////CSRF-token set end/////////////////////////////
+        ///////////////////////////////////////////////////////////////////////////////
+    </script>
+    {% block head %}
+    {% endblock %}
+</head>
+<body>
+<nav class="navbar navbar-inverse">
+    <div class="container-fluid">
+        <div class="navbar-header">
+            <a class="navbar-brand" href="#">CS6400_Team_21</a>
+        </div>
+        <ul class="nav navbar-nav">
+            <li class="active"><a href="/">Home</a></li>
+            {% if 'Inventory Clerk' in request.session.logged_user.job_title %}
+                <li class="add_vehicle"><a href="#add_vehicle" id="add_vehicle" class="add_vehicle">Add Vehicle</a></li>
+            {% endif %}
+            {% if 'Manager' in request.session.logged_user.job_title %}
+                                <li><a href="{% url 'reports' token='regular' %}">Reports</a></li>
+
+            {% endif %}
+
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+            {% if request.session.logged_user %}
+                <li><a href="#"><span
+                        class="glyphicon glyphicon-user"></span> {{ request.session.logged_user.username }}</a></li>
+                <li><a href="/log_out"><span class="glyphicon glyphicon-log-in"></span> Log Out</a></li>
+            {% else %}
+                <li><a href="#"><span class="glyphicon glyphicon-user"></span> Sign Up</a></li>
+                <li><a class="login" href="#"><span class="glyphicon glyphicon-log-in"></span> Log In</a></li>
+            {% endif %}
+
+        </ul>
+    </div>
+</nav>
+{% block body %}
+{% endblock %}
+</body>

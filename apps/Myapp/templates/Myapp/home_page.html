@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+{% block head %}
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'Myapp/css/home_page.css' %}">
+    <style>
+        {%  if error_form %}
+            {% if error_form == 'add_seller' %}
+                form.seller_info {
+                    display: block;
+                }
+            {% elif error_form == 'vehicle_form' %}
+                form.add_vehicle {
+                    display: block;
+                }
+            {% elif error_form == 'login_form' %}
+                form.login {
+                    display: block
+                }
+            {% endif %}
+        {% endif %}
+
+        {% if search %}
+            div.detail_list{
+                display: block;
+            }
+        {% else %}
+            div.detail_list{
+                display: none;
+            }
+        {% endif %}
+        {% if not user.job_title %}
+            label[for="id_vin"]{
+                display: none;
+            }
+            input[name="vin"]{
+            display: none
+            }
+        {% endif %}
+
+
+    </style>
+
+{% endblock %}
+{% block body %}
+    <div class="container" style="width: 60%">
+
+        <input type="hidden" value="{{ request.session.logged_user.job_title }}">
+        <div class="row">
+            <h2>Total Available Vehicles number is {{ avail_vehicles|length }}</h2>
+            {% if 'Manager' in request.session.logged_user.job_title or 'Inventory Clerk' in request.session.logged_user.job_title %}
+                <h2>Vehicles with pending parts : {{ pending_num }}</h2>
+            {% endif %}
+{#            <p style="float: right"> You are {{ request.session.logged_user.job_title }}</p>#}
+        </div>
+        <div class="row search">
+            <form action="{% url 'home_page' %}" class="search_form" method="post">
+                {% csrf_token %}
+                {{ search_form.as_p }}
+                <input type="submit" name="submit_search" value="Search">
+            </form>
+        </div>
+        <div class="row detail_list">
+            <h3><i>Search Results:</i></h3> <a id="result_list" style="cursor: pointer">Collapse Search Results</a>
+            {% if result %}
+                <table class="table table-hover">
+                    <thead>
+                    <tr>
+                        <th>VIN</th>
+                        <th>Type</th>
+                        <th>Model Year</th>
+                        <th>Model</th>
+                        <th>Manufacturer</th>
+                        <th>Mileage</th>
+                        <th>Colors</th>
+                        <th>Sales Price</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    {% for r in result %}
+                        <tr {% if request.session.logged_user %}data-href="vehicle_details/user={{ request.session.logged_user.username }}/vin={{ r.VIN }}" {% else %} data-href="vehicle_details/user=public/vin={{ r.VIN }}"{% endif %}>
+                            <td>{{ r.VIN }}</td>
+                            <td>{{ r.type_name }}</td>
+                            <td>{{ r.model_year }}</td>
+                            <td>{{ r.model_name }}</td>
+                            <td>{{ r.mfg_name }}</td>
+                            <td>{{ r.mileage }}</td>
+                            <td>{{ r.colors }}</td>
+                            <td>{{ r.sales_price }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <h4>Sorry, it looks like we dont't have that in stock !</h4>
+            {% endif %}
+
+        </div>
+        <div class="row">
+
+
+            <form action="{% url 'home_page' %}" method='post' class="login" style="text-align: center;">
+                {% csrf_token %}
+                {{ login_form.as_p }}
+                <input type="submit" value="Log In" name="submit_login">
+            </form>
+
+        </div>
+
+        {% if 'Inventory Clerk' in request.session.logged_user.job_title %}
+
+
+            <div class="row" style="margin-top: 50px">
+                <form action="{% url 'home_page' %}" method="post" class="form-horizontal add_vehicle" id="add_vehicle">
+                    {% csrf_token %}
+                    {#                    {{ vehicle_form.as_p }}#}
+                    {% if vehicle_form.non_field_errors %}
+                    {% for error in vehicle_form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        <a class="close" href="#" data-dismiss="alert">x</a>
+                        {{ error }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                    <div class="row ">
+                        <div class="  col-md-5">
+                            <label for="{{ vehicle_form.vin.id_for_label }}">VIN</label>
+                            {{ vehicle_form.vin }}
+                        </div>
+                        <div class=" col-md-5 col-md-offset-2">
+                            <label for="{{ vehicle_form.model_name.id_for_label }}">Model Name</label>
+                            {{ vehicle_form.model_name }}
+                        </div>
+                    </div>
+
+                    <div class="row ">
+                        <div class=" col-md-5">
+                            <label for="{{ vehicle_form.model_year.id_for_label }}">Model_year</label>
+                            {{ vehicle_form.model_year }}
+                        </div>
+                        <div class="col-md-5 col-md-offset-2">
+                            <label for="{{ vehicle_form.mileage.id_for_label }}">Mileage</label>
+                            {{ vehicle_form.mileage }}
+                        </div>
+                    </div>
+                    <div class="row ">
+                        <div class="col-md-5">
+                            <label for="{{ vehicle_form.type.id_for_label }}">Type</label>
+                            {{ vehicle_form.type }}
+                        </div>
+                        <div class="col-md-5 col-md-offset-2">
+                            <label for="{{ vehicle_form.mfg.id_for_label }}">Manufacturer</label>
+                            {{ vehicle_form.mfg }}
+                        </div>
+                    </div>
+                    <div class="row ">
+                        <div class="col-md-5">
+                            <label for="{{ vehicle_form.condition.id_for_label }}">Condition</label>
+                            {{ vehicle_form.condition }}
+                        </div>
+                        <div class="col-md-5 col-md-offset-2">
+                            <label for="{{ vehicle_form.colors.id_for_label }}">Colors</label>
+                            {{ vehicle_form.colors }}
+                        </div>
+                    </div>
+                    <div class="row ">
+                        <div class=" col-md-5">
+                            <label for="{{ vehicle_form.original_price.id_for_label }}">Buy-in Price</label>
+                            {{ vehicle_form.original_price }}
+                        </div>
+                        <div class="col-md-5 col-md-offset-2">
+                            <label for="{{ vehicle_form.seller.id_for_label }}">Seller</label>
+                            {{ vehicle_form.seller }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 ">
+                            <label for="{{ vehicle_form.description.id_for_label }}">Description</label>
+                            {{ vehicle_form.description }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group" style="text-align: center">
+                            <input type="submit" value="Add Vehicle" name="submit_vehicle">
+                            <button type="button" value="add seller">Add Seller</button>
+                        </div>
+                    </div>
+
+                </form>
+
+                <form action="/" method="post" class="form-horizontal seller_info">
+                    {% csrf_token %}
+                     {% if customer_form.non_field_errors %}
+                    {% for error in customer_form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        <a class="close" href="#" data-dismiss="alert">x</a>
+                        {{ error }}
+                    </div>
+                    {% endfor %}
+                {% endif %}
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label for="{{ customer_form.type.id_for_label }}">Individual</label>
+                            {{ customer_form.type }}
+                        </div>
+                    </div>
+                    <div class="row ">
+                        <div class="col-md-5">
+                            <label for="{{ customer_form.first_name.id_for_label }}">First Name</label>
+                            {{ customer_form.first_name }}
+                        </div>
+                        <div class="col-md-5 col-md-offset-2">
+                            <label for="{{ Customer_form.seller.id_for_label }}">Last Name</label>
+                            {{ customer_form.last_name }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label for="{{ customer_form.street.id_for_label }}">Street</label>
+                        {{ customer_form.street }}
+                        </div>
+
+                    </div>
+
+                    <div class="row ">
+                        <div class=" col-md-4">
+                            <label for="{{ customer_form.city.id_for_label }}">City</label>
+                            {{ customer_form.city }}
+                        </div>
+                        <div class="col-md-4 ">
+                            <label for="{{ Customer_form.state.id_for_label }}">State</label>
+                            {{ customer_form.state }}
+                        </div>
+                        <div class="col-md-4">
+                            <label for="{{ Customer_form.zip_code.id_for_label }}">Zip Code</label>
+                            {{ customer_form.zip_code }}
+                        </div>
+                    </div>
+
+
+                    <div class="row ">
+                        <div class=" col-md-5">
+                            <label for="{{ customer_form.phone_number.id_for_label }}">Phone</label>
+                            {{ customer_form.phone_number }}
+                        </div>
+                        <div class="col-md-5 col-md-offset-2">
+                            <label for="{{ Customer_form.email.id_for_label }}">E-mail</label>
+                            {{ customer_form.email }}
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12">
+                            <label for="{{ customer_form.dl_num.id_for_label }}">Driver License</label>
+                            {{ customer_form.dl_num }}
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class=" col-md-12">
+                            <label for="{{ customer_form.business_name.id_for_label }}">Company Name</label>
+                            {{ customer_form.business_name }}
+                        </div>
+                    </div>
+                    <div class="row ">
+                        <div class=" col-md-5">
+                            <label for="{{ customer_form.title.id_for_label }}">Tile</label>
+                            {{ customer_form.title }}
+                        </div>
+                        <div class="col-md-5 col-md-offset-2">
+                            <label for="{{ Customer_form.tax_id.id_for_label }}">Tax ID</label>
+                            {{ customer_form.tax_id }}
+                        </div>
+                    </div>
+
+
+                    <div class="form-group">
+                        <input type="submit" value="Submit" name="submit_seller" style="margin: auto">
+                    </div>
+                </form>
+            </div>
+
+
+            <div class="row add_seller" style="text-align: center">
+                <ul class="list-group add_seller_errors"
+                    style="list-style: none; margin: auto; width: 50%; padding: 0;">
+
+                </ul>
+            </div>
+
+            {% if messages %}
+                {% for m in messages %}
+                    <div class="alert alert-success">
+                        <a class="close" href="#" data-dismiss="alert">×</a>
+
+                        {{ m }}
+
+                    </div>
+                {% endfor %}
+            {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    {% load static %}
+    <script type="text/javascript" src="{% static 'Myapp/js/home.js' %}"></script>
+{% endblock %}
+
+

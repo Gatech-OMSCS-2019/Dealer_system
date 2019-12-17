@@ -1,0 +1,37 @@
+
+.detail_list tbody tr {
+    cursor: pointer;
+}
+
+form.seller_info label {
+    float: left;
+}
+
+form.seller_info {
+    margin: auto;
+    text-align: center;
+    display: none;
+}
+
+form.add_vehicle {
+    display: none;
+}
+
+form.login {
+    display: none;
+}
+
+select[name='advanced'], label[for='id_advanced'] {
+    display: none;
+}
+
+div.add_part_order {
+
+}
+
+
+
+
+
+
+
